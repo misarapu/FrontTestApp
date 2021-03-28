@@ -3,13 +3,22 @@
 		<v-row>
 			<v-col md="6">
 				<v-card class="pa-10" outlined>
+					<v-alert
+						id="success-aler"
+						:class="{ 'd-none': !this.successMessage }"
+						type="success"
+					>{{ this.successMessage }}</v-alert>
+					<v-alert
+						id="error-alert"
+						:class="{ 'd-none': !this.errorMessage }"
+						type="error"
+					>{{ this.errorMessage }}</v-alert>
 					<h3>
 						Please enter your name and pick the Sectors you are currently
 						involved in.
 					</h3>
 					<v-form
 						ref="form"
-						action="/"
 						v-model="valid"
 						@submit="loginSector"
 						method="post"
@@ -27,7 +36,7 @@
 							v-model="selectedSector"
 							:rules="[(v) => !!v || 'Item is required']"
 							:items="sectors"
-              item-value="id"
+							item-value="id"
 							label="Sector"
 							required
 						>
@@ -74,9 +83,11 @@
 <script>
 export default {
 	data: () => ({
-    root: "http://localhost:3000/api/",
+		root: "http://localhost:3000/api/",
 		valid: true,
 		name: "",
+    successMessage: null,
+    errorMessage: null,
 		nameRules: [
 			(v) => !!v || "Name is required",
 			(v) => (v && v.length <= 20) || "Name must be less than 20 characters",
@@ -98,13 +109,22 @@ export default {
 			if (sector.group_4) return 3;
 			return 4;
 		},
-		loginSector() {
+		loginSector(e) {
+      let selectedSectorName = this.sectors.find(s => s.id === this.selectedSector).name;
 			this.axios
 				.post(this.root + "logins", {
 					user_name: this.name,
-					sector_id: this.selectedSector
+					sector_id: this.selectedSector,
 				})
-				.catch((err) => console.log("Posting error: " + err.message));
+				.then(() => {
+					this.successMessage = `${this.name} added to sector ${selectedSectorName}`;
+          this.errorMessage = null;
+				})
+				.catch((err) => {
+          this.errorMessage = `${this.name} failed to add to sector ${selectedSectorName}. Error: ${err.message}`;
+          this.successMessage = null;
+				});
+			e.preventDefault();
 		},
 	},
 
